@@ -1,0 +1,5 @@
+-- NovelForge 初始数据
+-- 只保留 admin 账号
+
+INSERT INTO public.users (id, email, username, password_hash, nickname, avatar_url, is_active, created_at, updated_at) VALUES
+('01d116d5-6d56-42e4-9a22-32a2205bd299', '2214936009@qq.com', 'admin', '$2b$12$NLgCa3vE412ywFGf49H3quNmAr944qqn4Pmro.m6PjEcVF1QG0qL.', '无风123', NULL, true, '2026-05-23 12:34:17.868174', '2026-05-23 12:34:17.868361');
