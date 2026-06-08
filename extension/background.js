@@ -7,6 +7,15 @@ let refreshToken = '';
 let savedAccount = '';
 let savedPassword = '';
 
+// Service Worker 启动时从 storage 恢复认证状态（MV3 下 SW 会频繁重启）
+chrome.storage.local.get(['authToken', 'refreshToken', 'savedAccount', 'savedPassword'], (data) => {
+  if (data.authToken) authToken = data.authToken;
+  if (data.refreshToken) refreshToken = data.refreshToken;
+  if (data.savedAccount) savedAccount = data.savedAccount;
+  if (data.savedPassword) savedPassword = data.savedPassword;
+  console.log('[NF] Auth state restored from storage, hasToken:', !!authToken, 'hasRefresh:', !!refreshToken);
+});
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === 'LOGIN') {
     login(msg.account, msg.password).then(sendResponse);
@@ -1895,6 +1904,11 @@ async function login(account, password) {
 }
 
 async function refreshAccessToken() {
+  // 兜底：如果全局变量为空（SW 刚重启），从 storage 读取
+  if (!refreshToken) {
+    const stored = await new Promise(r => chrome.storage.local.get('refreshToken', r));
+    if (stored.refreshToken) refreshToken = stored.refreshToken;
+  }
   if (!refreshToken) {
     return null;
   }
@@ -1919,6 +1933,12 @@ async function refreshAccessToken() {
 }
 
 async function autoReLogin() {
+  // 兜底：如果全局变量为空（SW 刚重启），从 storage 读取
+  if (!savedAccount || !savedPassword) {
+    const stored = await new Promise(r => chrome.storage.local.get(['savedAccount', 'savedPassword'], r));
+    if (stored.savedAccount) savedAccount = stored.savedAccount;
+    if (stored.savedPassword) savedPassword = stored.savedPassword;
+  }
   if (savedAccount && savedPassword) {
     const result = await login(savedAccount, savedPassword);
     if (result.ok) {
